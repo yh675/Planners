@@ -9,8 +9,12 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include(CTest)
 enable_testing()
 
-add_executable(Planners main.cpp)
+set(Sources utils.cpp utils.h)
+
+add_executable(Planners main.cpp ${SOURCES})
 target_link_libraries(Planners ${OpenCV_LIBS})
+
+include_directories("/home/yutaohan/CPP_training/Planning/") #add to set access custom headers
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

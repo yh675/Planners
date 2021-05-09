@@ -11,6 +11,9 @@
 #include <opencv2/opencv.hpp>
 #include <Eigen/Core>
 
+//include custom headers and files
+#include <utils.h>
+
 
 using namespace std; //set namespace 
 
@@ -28,6 +31,20 @@ class Node {
     //Node(int row, int col, int ele) : r(row), c(col), e(ele) {}; //constructor
 
 };
+
+// class Color{
+
+//     public:
+//         //colors
+//         cv::Vec3b c_blue;
+
+//     void assign_colors(){
+//         c_blue[0] = 255;
+//         c_blue[1] = 0;
+//         c_blue[2] = 0;
+//     }
+
+// };
 
 //class for coordinates of traversal
 class Coordinate {
@@ -58,17 +75,17 @@ void display_img(cv::Mat image){
 
 //backtrack from last node to the start node
 int backtrack(Node* end, cv::Mat image, cv::Vec3b color){
-    Node* tracker = end;
-
+    
+    int length = 0;
     int r, c; // row and column
     while(end -> parent != nullptr){ // while we are not at the start node
-        // cout << end -> parent -> e << endl;
+        length++;
         image.at<cv::Vec3b>(end -> r, end -> c) = color;
         end = end -> parent; //set end to its parent
     }
     cv::circle(image, cv::Point(end -> c, end -> r), 5, color, 2);
 
-    return 0;
+    return length;
 }
 
 
@@ -80,46 +97,9 @@ int main(int argc, char** argv) {
     auto start = make_tuple(310, 50); //(row, column)
     auto goal = make_tuple(130, 520);
 
-    //colors
-    cv::Vec3b c_blue;
-    c_blue[0] = 255;
-    c_blue[1] = 0;
-    c_blue[2] = 0;
-
-    cv::Vec3b c_pblue;
-    c_pblue[0] = 255;
-    c_pblue[1] = 191;
-    c_pblue[2] = 0;
-
-    cv::Vec3b c_indigo;
-    c_indigo[0] = 130;
-    c_indigo[1] = 0;
-    c_indigo[2] = 75;
-
-    cv::Vec3b c_orange;
-    c_orange[0] = 0;
-    c_orange[1] = 128;
-    c_orange[2] = 255;
-
-    cv::Vec3b c_green;
-    c_green[0] = 0;
-    c_green[1] = 255;
-    c_green[2] = 0;
-
-    cv::Vec3b c_red;
-    c_red[0] = 0;
-    c_red[1] = 0;
-    c_red[2] = 255;
-
-    cv::Vec3b c_white; //free space
-    c_white[0] = 255;
-    c_white[1] = 255;
-    c_white[2] = 255;
-
-    cv::Vec3b c_black; //obstacle space
-    c_black[0] = 0;
-    c_black[1] = 0;
-    c_black[2] = 0;
+    //define colors
+    Color colors;
+    colors.assign_colors();
 
     string map_dir = "Maps/World_Map_bin.png"; //directory to load image map
     cv::Mat map; //initialize image object
@@ -139,21 +119,23 @@ int main(int argc, char** argv) {
     unordered_map<int, Node*> node_map; //hashmap of nodes
 
     //check if start and goal are valid
-    if (map.at<cv::Vec3b>(get<0>(start),get<1>(start)) == c_black){
+    if (map.at<cv::Vec3b>(get<0>(start),get<1>(start)) == colors.c_black){
         cout << "not a valid start node: make sure you are on a white pixel" << endl;
     }
 
-    if (map.at<cv::Vec3b>(get<0>(goal),get<1>(goal)) == c_black){
+    if (map.at<cv::Vec3b>(get<0>(goal),get<1>(goal)) == colors.c_black){
         cout << "not a valid goal node: make sure you are on a white pixel" << endl;
     }
 
+    /*create hashmap using linear indexing the generate the keys, 
+    this allows for fast lookup of nodes based on their row and column*/
     Node* init = new Node(); //initialize the starting node
     for (int r=0; r<rows; r++){ //iterate over rows
         for (int c=0; c<cols; c++){ //iterate over columns
 
             cv::Vec3b image_color = map.at<cv::Vec3b>(r,c); //image color
-            if (image_color == c_white){ //if that row is free space, need to create a new node and append it
-                // map.at<cv::Vec3b>(r,c) = c_blue;
+            if (image_color == colors.c_white){ //if that row is free space, need to create a new node and append it
+                // map.at<cv::Vec3b>(r,c) = colors.c_blue;
                 Node* new_node = new Node(); //declare new node
                 new_node -> r = r;
                 new_node -> c = c;
@@ -220,7 +202,7 @@ int main(int argc, char** argv) {
         current_node = node_map[element]; //get the current node from the hashmap
         current_node -> vis = 1; //current node has been visited
 
-        map.at<cv::Vec3b>(current_node -> r,current_node -> c) = c_pblue; //color visited node on map
+        map.at<cv::Vec3b>(current_node -> r,current_node -> c) = colors.c_pblue; //color visited node on map
 
         //check if current node is the goal, return
         if ((current_node -> r == get<0>(goal)) && (current_node -> c == get<1>(goal))){
@@ -230,7 +212,7 @@ int main(int argc, char** argv) {
 
         //for each neighbor of current node still in the unexplored set
         for (Coordinate coord:deltas){//iterate through all the coordinates to get the neighbors
-            // cout << "check coord" << endl;
+
             neigh_r = current_node -> r + coord.r;//row of neighbor
             neigh_c = current_node -> c + coord.c;//col of neighbor
             neigh_e = neigh_r*cols + neigh_c;
@@ -252,7 +234,8 @@ int main(int argc, char** argv) {
             node and the neighbor*/
             neigh_node = node_map[neigh_e]; //get the neighbor node
 
-            if (neigh_node -> vis==1){ //if current node has already been visited                
+            if (neigh_node -> vis==1){ //if current node has already been visited         
+                //cout << "neighbor has already been visited" << endl;       
                 continue;
             }
 
@@ -275,7 +258,7 @@ int main(int argc, char** argv) {
                 pq.push(make_pair(neigh_dist, neigh_node -> e)); //push neighbor distance and element to the priority queue
 
                 //update neigh parent
-                map.at<cv::Vec3b>(neigh_r,neigh_c) = c_red; //color neighbor node added to queue
+                map.at<cv::Vec3b>(neigh_r,neigh_c) = colors.c_red; //color neighbor node added to queue
             }
         }
         // cv::imshow("Display window", map); //display image
@@ -293,10 +276,12 @@ int main(int argc, char** argv) {
 
     }
 
-    // Node* end_node = &current_node;
-    backtrack(current_node, map, c_green);
+    
+    //backtrack to get the shortest path
+    int length = backtrack(current_node, map, colors.c_green);
+    cout << "length: " << length << endl;
 
-    cv::circle(map, cv::Point(current_node -> c, current_node -> r), 5, c_green, 2);
+    cv::circle(map, cv::Point(current_node -> c, current_node -> r), 5, colors.c_green, 2);
     display_img(map);
 }
 
