@@ -33,6 +33,8 @@ int main(int argc, char** argv) {
 
     cout << "Path Length: " << result.length << endl; //print path length
     utils::display_img(result.map); //visualize result
+    
+    cv::imwrite("Maps/Dijkstra_result.png", map); //write the results
  
 }
 
