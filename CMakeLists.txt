@@ -9,7 +9,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include(CTest)
 enable_testing()
 
-set(Sources utils.cpp utils.h)
+set(SOURCES utils.cpp utils.h dijkstra.cpp dijkstra.h)
 
 add_executable(Planners main.cpp ${SOURCES})
 target_link_libraries(Planners ${OpenCV_LIBS})
@@ -18,5 +18,5 @@ include_directories("/home/yutaohan/CPP_training/Planning/") #add to set access 
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-SET(CMAKE_CXX_FLAGS "-std=c++11")
+SET(CMAKE_CXX_FLAGS "-std=c++14")
 include(CPack)
