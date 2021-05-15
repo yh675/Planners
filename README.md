@@ -1,3 +1,5 @@
 # Planners
 
-Visualize Dijkstra Planner and World Map
+Visualize popular planners on World Map.
+
+![Screenshot](Maps/Dijkstra_results.png)
