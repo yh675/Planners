@@ -2,4 +2,10 @@
 
 Visualize popular planners on World Map.
 
-![Screenshot](Maps/Dijkstra_results.png)
+Dijkstra visualized:
+
+![Dijkstra](Maps/Dijkstra_result.png)
+
+Astar visualized:
+
+![Astar](Maps/Astar_result.png)
