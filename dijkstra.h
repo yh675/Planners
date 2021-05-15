@@ -26,7 +26,8 @@ namespace dji{
             int r, c; // row and column of the node
             int e; // the element number
             int vis = 0; //has been visited or not
-            double dist = numeric_limits<double>::infinity();
+            double dist = numeric_limits<double>::infinity(); //current distance, equivalent of g in astar
+            double cost = 0.; //cost for astar planner, equivalent of f in astar, in f = g + h, where h is the heuristic
 
         Node* parent = nullptr; //define the parent, parent is a pointer to a Node
 
@@ -48,7 +49,8 @@ namespace dji{
     int backtrack(dji::Node* end, cv::Mat image, cv::Vec3b color);
 
     // run the planner
-    Result planner(cv::Mat map, tuple<int, int> start, tuple<int, int> goal);
+    Result planner(cv::Mat map, tuple<int, int> start, tuple<int, int> goal, string planner_type);
+
 }
 
 #endif

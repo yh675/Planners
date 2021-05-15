@@ -37,7 +37,7 @@ namespace dji{
     }
 
     //run the planner
-    Result planner(cv::Mat map, tuple<int, int> start, tuple<int, int> goal){
+    Result planner(cv::Mat map, tuple<int, int> start, tuple<int, int> goal, string planner_type){
         // return map;
         // initialize traversable coordinates
         Coordinate deltas[8] {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
@@ -112,9 +112,12 @@ namespace dji{
         priority_queue<iPair, vector <iPair> , greater<iPair> > pq;
 
         init -> dist = 0; //start node has zero dist
-        pq.push(make_pair(init -> c, init -> e)); //add start node to min priority queue, pushes to the end of the queue
+        if (planner_type == "dij"){
+            pq.push(make_pair(init -> dist, init -> e)); //add start node to min priority queue, pushes to the end of the queue
+        } else if (planner_type == "astar"){
+            pq.push(make_pair(init -> cost, init -> e)); //add start node to min priority queue, pushes to the end of the queue
+        }
 
-        double current_dist;
 
         Node* current_node = new Node(); //declare current_node
         Node* neigh_node = new Node(); //the neighbor node
@@ -123,15 +126,15 @@ namespace dji{
         int neigh_e; //neighbor element
         double neigh_dist; //neighbor distance
         double trav_dist; //distance to travel to new node
-
-        int iter = 0;
+        double neigh_cost;
+        double heuristic;
+        double current_cost; //cost of current evaluated node
+        int power = 2;
 
         while(!pq.empty()){ //while the unexplored set is not empty
-            // cout << iter << endl;
-            iter ++;
 
             iPair current_pair = pq.top(); //get the pair with the smallest distance
-            current_dist = current_pair.first; //dist of current node
+            current_cost = current_pair.first; //dist of current node
             element = current_pair.second; //element index of current node
 
             pq.pop(); //remove current node from priority queue
@@ -181,7 +184,13 @@ namespace dji{
                     trav_dist = 1.1;
                 }
 
-                neigh_dist = current_dist + trav_dist; //calculate the new proposed distance
+                neigh_dist = current_cost + trav_dist; //calculate the new proposed distance
+
+                if (planner_type == "astar"){ //calculate heuristic cost
+                    //heuristic which is ((r_g - r) ^ 2 + (c_g - c) ^2) 
+                    heuristic = pow(pow(neigh_r-get<0>(goal), power) + pow(neigh_c-get<1>(goal), power), 1); 
+                    neigh_cost = heuristic + neigh_dist; //astar cost
+                }
 
                 /*if the new distance is less than the neighbor nodes distance:
                 set neighbors distance to the new distance
@@ -192,7 +201,15 @@ namespace dji{
                     neigh_node -> dist = neigh_dist; //update dist of the node
                     neigh_node -> parent = current_node; //assign current node as parent of the neighbor node
                     node_map[neigh_e] = neigh_node; //update neighbor node in the hash map
+
+                    if (planner_type == "dij"){ //using dij algorithm only consider distance from start node
                     pq.push(make_pair(neigh_dist, neigh_node -> e)); //push neighbor distance and element to the priority queue
+                    }
+
+                    else if (planner_type == "astar"){ //using astar algorithm also consider distance heuristic
+                    neigh_node -> cost = neigh_cost; //assign astar cost to neigh_node
+                    pq.push(make_pair(neigh_cost, neigh_node -> e)); //push neighbor distance and element to the priority queue
+                    }
 
                     //update neigh parent
                     map.at<cv::Vec3b>(neigh_r,neigh_c) = colors.c_red; //color neighbor node added to queue
